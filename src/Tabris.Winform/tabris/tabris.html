@@ -58,6 +58,7 @@
     <script src="resources/codemirror-javascript/addon/hint/tern/defs/ecma5.json.js"></script>
     <script src="resources/codemirror-javascript/addon/hint/tern/defs/browser.json.js"></script>
     <script src="resources/codemirror-javascript/addon/hint/tern/defs/underscore.json.js"></script>
+    <script src="resources/codemirror-javascript/addon/hint/tern/defs/jquery.json.js"></script>
 
     <link rel="stylesheet" href="resources/codemirror-extension/addon/hint/show-hint-eclipse.css">
     <script src="resources/codemirror-extension/addon/hint/show-context-info.js"></script>
@@ -101,9 +102,9 @@
     <script src="resources/codemirror/addon/fold/indent-fold.js"></script>
 
 
-    <!--<link rel="stylesheet" href="resources/codemirror-extension/addon/hover/text-hover.css">
+    <link rel="stylesheet" href="resources/codemirror-extension/addon/hover/text-hover.css">
         <script src="resources/codemirror-extension/addon/hover/text-hover.js"></script>
-        <script src="resources/codemirror-javascript/addon/hint/tern/tern-hover.js"></script>-->
+        <script src="resources/codemirror-javascript/addon/hint/tern/tern-hover.js"></script>
     <script type="text/javascript">
         var _setTimer = undefined;
         $(function () {
@@ -127,6 +128,7 @@
                         "Alt-.": function (a) { CodeMirror.tern.jumpToDef(a) },
                         "Alt-,": function (a) { CodeMirror.tern.jumpBack(a) },
                         "Ctrl-Q": function (a) { CodeMirror.tern.rename(a) },
+                        "Alt-\\": function (a) { cmEditor.editor.off("cursorActivity", autoComplete);cmEditor.editor.showHint({isFunc:true}) },
                         "Ctrl-S": function (a) {
 							try{csharpJsFunction && csharpJsFunction.Save(getCode());}catch(e){}
 						},
@@ -153,7 +155,7 @@
                     },
                     gutters: ["CodeMirror-lint-markers", "CodeMirror-foldgutter","CodeMirror-linenumbers", "breakpoints"],
                     highlightSelectionMatches: { showToken: /\w/, annotateScrollbar: true },
-                    textHover: { delay: 300 },
+                    textHover: { delay: 1000 },
                     ternWith: { plugins: { tabris: {} } },
                     lint: {
                         esversion: 6
@@ -161,7 +163,7 @@
                     scrollbarStyle: "simple",
                     foldGutter: true,
                 });
-
+            CodeMirror.cm =cmEditor.editor;
             cmEditor.editor.on("gutterClick", function (cm, n) {
 				try{
 					var info = cm.lineInfo(n);

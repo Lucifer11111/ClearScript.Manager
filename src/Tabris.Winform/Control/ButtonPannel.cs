@@ -57,9 +57,11 @@ namespace Tabris.Winform.Control
 
         public Action<string> OnTitleChange { get; set; }
         public Action OnModify { get; set; }
-        public ButtonPannel(ChromiumWebBrowser brower, ChromiumWebBrowser _debuggerBrower,int DebuggerPort ,Action<LogLevel, string, string> logAction)
+        public readonly Action ClearLog;
+        public ButtonPannel(ChromiumWebBrowser brower, ChromiumWebBrowser _debuggerBrower,int DebuggerPort ,Action<LogLevel, string, string> logAction, Action clearLog,Action<ChromiumWebBrowser,Action> AddChrome)
         {
             this.logAction = logAction;
+            this.ClearLog = clearLog;
             init();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(TabrisWinform));
             this.codemirrow = brower;
@@ -67,6 +69,7 @@ namespace Tabris.Winform.Control
             debuggerPort = DebuggerPort;
             this.codemirrow.AllowDrop = true;
             this.codemirrow.MenuHandler = new JSFunc(this);
+            this.debuggerBrower.MenuHandler = new DebugJSFunc(this);
             codemirrow.RegisterJsObject("csharpJsFunction", new JSFunc(this), new BindingOptions { CamelCaseJavascriptNames = false });
 
             this.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -91,7 +94,11 @@ namespace Tabris.Winform.Control
 
             JavaScript.Manager.Tabris.Tabris.Register(manager.RequireManager, new JavaScript.Manager.Tabris.TabrisOptions
             {
-                LogExecutor = new WinformLogExcutor(logAction)
+                LogExecutor = new WinformLogExcutor(logAction),
+                ViewExecutor = new ChromeViewExecutor
+                {
+                    AddChrome = AddChrome
+                }
             });
 
             //GetDebuggerTargetId();
@@ -144,14 +151,14 @@ namespace Tabris.Winform.Control
             }
         }
 
-        private void OnDebugging()
+        private void OnDebugging(bool flag = false)
         {
             if (debuggerBrower == null) return;
             this.BeginInvoke(new EventHandler(delegate
             {
                 
-                this.codemirrow.Visible = false;
-                debuggerBrower.Visible = true;
+                this.codemirrow.Visible = flag;
+                debuggerBrower.Visible = !flag;
             }));
         }
         private void OnDebuggingInit()
@@ -300,8 +307,12 @@ namespace Tabris.Winform.Control
 
                 if (e != null && e is DebuggeEventArgs)
                 {
+                    //var eventArg = (DebuggeEventArgs) e;
                     this.OnDebugging();
-                    invokeJsCode(code,true);
+                    if (!this.isRun)
+                    {
+                        invokeJsCode(code, true);
+                    }
                     return;
                 }
                 invokeJsCode(code);
@@ -378,6 +389,7 @@ namespace Tabris.Winform.Control
                 Annotation = 26507,
                 UnAnnotation = 26508,
                 Tip = 26509,
+                ClearLog = 26510,
             }
 
             private readonly ButtonPannel _buttonPannel;
@@ -432,7 +444,10 @@ namespace Tabris.Winform.Control
                         return;
                     }
 
-                    _buttonPannel.btnExcutor_Click(code, new DebuggeEventArgs(true));
+                    _buttonPannel.btnExcutor_Click(code, new DebuggeEventArgs(true)
+                    {
+                        IsMenuDebugger = true
+                    });
                 }
             }
             #endregion
@@ -520,6 +535,7 @@ namespace Tabris.Winform.Control
                 //Add new custom menu items
                 model.AddItem((CefMenuCommand)(int)MenuItem.ShowDevTools, "打开 DevTools");
                 model.AddItem((CefMenuCommand)(int)MenuItem.CloseDevTools, "Debugger  (F5)");
+                model.AddItem((CefMenuCommand)(int)MenuItem.ClearLog, "清除LOG");
                 //model.AddItem((CefMenuCommand)(int)MenuItem.CloseDevTools, "关闭 DevTools");
             }
 
@@ -594,6 +610,13 @@ namespace Tabris.Winform.Control
                         _buttonPannel.Tip();
                     }).Start();
                 }
+                if ((int)commandId == (int)MenuItem.ClearLog)
+                {
+                    new Task(() =>
+                    {
+                        _buttonPannel.ClearLog();
+                    }).Start();
+                }
                 return false;
             }
 
@@ -611,6 +634,51 @@ namespace Tabris.Winform.Control
         }
 
 
+        public class DebugJSFunc : IContextMenuHandler
+        {
+            private readonly ButtonPannel _buttonPannel;
+            public DebugJSFunc(ButtonPannel buttonPannel)
+            {
+                _buttonPannel = buttonPannel;
+            }
+            enum MenuItem
+            {
+                Hide = 16501,
+              
+            }
+            #region MenuHandler
+
+            void IContextMenuHandler.OnBeforeContextMenu(IWebBrowser browserControl, IBrowser browser, IFrame frame, IContextMenuParams parameters, IMenuModel model)
+            {
+                //To disable the menu then call clear
+                model.Clear();
+
+                model.AddItem((CefMenuCommand)(int)MenuItem.Hide, "关闭DEBUG");
+               
+            }
+
+            bool IContextMenuHandler.OnContextMenuCommand(IWebBrowser browserControl, IBrowser browser, IFrame frame, IContextMenuParams parameters, CefMenuCommand commandId, CefEventFlags eventFlags)
+            {
+
+                if ((int)commandId == (int)MenuItem.Hide)
+                {
+                    _buttonPannel.OnDebugging(true);
+                }
+                return false;
+            }
+
+            void IContextMenuHandler.OnContextMenuDismissed(IWebBrowser browserControl, IBrowser browser, IFrame frame)
+            {
+
+            }
+
+            bool IContextMenuHandler.RunContextMenu(IWebBrowser browserControl, IBrowser browser, IFrame frame, IContextMenuParams parameters, IMenuModel model, IRunContextMenuCallback callback)
+            {
+                return false;
+            }
+
+            #endregion
+        }
         public bool Save()
         {
             try
@@ -696,12 +764,13 @@ namespace Tabris.Winform.Control
                         if (tryCatch)
                         {
 code = $@"
-var tabris;
+var tabris,console;
 (function () 
 {{
     debugger;
     try{{
         tabris = tabris || require('javascript_tabris');
+        console = console || this.tabris.create('LOG');
         {codeLines}
     }}catch(err){{
         host.err=err.message;
@@ -712,11 +781,12 @@ var tabris;
                         else
                         {
 code = $@"
-var tabris;
+var tabris,console;
 (function () 
 {{
     debugger;
     tabris = tabris || require('javascript_tabris');
+    console = console || this.tabris.create('LOG');
     {codeLines}
 }})()";
                         }
@@ -729,11 +799,12 @@ var tabris;
                         if (tryCatch)
                         {
 code = $@"
-var tabris;
+var tabris,console;
 (function () 
 {{
     try{{
         tabris = tabris || require('javascript_tabris');
+        console = console || this.tabris.create('LOG');
         {codeLines}
     }}catch(err){{
         host.err=err.message;
@@ -745,10 +816,11 @@ var tabris;
                         else
                         {
 code = $@"
-var tabris;
+var tabris,console;
 (function () 
 {{
     tabris = tabris || require('javascript_tabris');
+    console = console || this.tabris.create('LOG');
     {codeLines}
 }})()";
 
@@ -763,11 +835,20 @@ var tabris;
                             new HostObject { Name = "host", Target = host }
                         }
                     };
-
+                    var scriptAwaiter = new ScriptAwaiter();
+                    if (code.Contains("scriptAwaiter"))
+                    {
+                        option.HostObjects.Add(new HostObject { Name = "scriptAwaiter", Target = scriptAwaiter });
+                    }
+                
                     try
                     {
                         await manager.ExecuteAsync(Guid.NewGuid().ToString(), code, option);
-
+                        if (code.Contains("scriptAwaiter"))
+                        {
+                            await scriptAwaiter.T;
+                        }
+                      
                     }
                     catch (Exception)
                     {

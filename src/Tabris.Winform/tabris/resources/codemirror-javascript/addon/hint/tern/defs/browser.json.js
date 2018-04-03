@@ -337,6 +337,629 @@ var def = {
     "!url": "https://developer.mozilla.org/en/docs/DOM/Node",
     "!doc": "A Node is an interface from which a number of DOM types inherit, and allows these various types to be treated (or tested) similarly."
   },
+  "TimerNode": {
+      "!type": "fn()",
+      "prototype": {
+          "textContent": {
+              "!type": "string",
+              "!url": "https://developer.mozilla.org/en/docs/DOM/Node.textContent",
+              "!doc": "Gets or sets the text content of a node and its descendants."
+          }
+      },
+      "!url": "https://developer.mozilla.org/en/docs/DOM/Node",
+      "!doc": "A Node is an interface from which a number of DOM types inherit, and allows these various types to be treated (or tested) similarly."
+  },
+  "Timer": {
+      "!type": "fn()",
+      "prototype": {
+          "pushCallback": {
+              "!type": "fn(listener: fn()) -> Timer.prototype",
+              "!doc": "start the timer"
+          },
+          "start": {
+              "!type": "fn() -> ?",
+              "!doc": "start the timer"
+          },
+          "stop": {
+              "!type": "fn() -> ?",
+              "!doc": "stop the timer"
+          },
+          "RESTART": "number",
+          "DONEXT": "number"
+      },
+      "!url": "https://developer.mozilla.org/en/docs/DOM/Element",
+      "!doc": "Timer"
+  },
+  "System": {
+      "!type": "fn()",
+      "prototype": {
+          "IO": {
+              "!type": "IO.prototype",
+              "!doc": "Io"
+          },
+          "Text": {
+              "!type": "CSharpText.prototype",
+              "!doc": "Text"
+          }
+      },
+      "!doc": "System"
+  },
+  "CSharpText": {
+      "!type": "fn()",
+      "prototype": {
+          "Encoding": {
+              "!type": "SystemEncoding.prototype",
+              "!doc": "Encoding"
+          }
+      },
+      "!doc": "CSharpText"
+  },
+  "SystemEncoding": {
+      "!type": "fn()",
+      "prototype": {
+          "UTF8": {
+              "!type": "UTF8.prototype",
+              "!doc": "UTF8"
+          }
+      },
+      "!doc": "SystemEncoding"
+  },
+  "UTF8": {
+      "!type": "fn()",
+      "prototype": {
+          "GetBytes": {
+              "!type": "fn(value: string) -> [+Byte]",
+              "!doc": "File"
+          },
+          "GetString": {
+              "!type": "fn(value: [+Byte]) -> string",
+              "!doc": "CSharpSeekOrigin"
+          }
+      },
+      "!doc": "UTF8"
+  },
+  "IO": {
+      "!type": "fn()",
+      "prototype": {
+          "File": {
+              "!type": "+SystemFile",
+              "!doc": "File"
+          },
+          "Directory": {
+              "!type": "+Directory",
+              "!doc": "Directory"
+          },
+          "Path": {
+              "!type": "+Path",
+              "!doc": "Path"
+          },
+          "StreamReader": {
+              "!type": "fn(target: ?) -> +StreamReader",
+              "!doc": "StreamReader"
+          },
+          "StreamWriter": {
+              "!type": "fn(target: ?) -> +StreamWriter",
+              "!doc": "StreamWriter"
+          },
+          "SeekOrigin": {
+              "!type": "CSharpSeekOrigin.prototype",
+              "!doc": "CSharpSeekOrigin"
+          },
+          "FileMode": {
+              "!type": "CSharpFileMode.prototype",
+              "!doc": "CSharpFileMode"
+          },
+          "SearchOption": {
+              "!type": "CSharpSearchOption.prototype",
+              "!doc": "SearchOption"
+          }
+      },
+      "!doc": "Io"
+  },
+  "Path": {
+      "!type": "fn()",
+      "prototype": {
+          "ChangeExtension": {
+              "!type": "fn(path: string, extension: string) -> string",
+              "!doc": "Changes the extension of a path string."
+          },
+          "Combine": {
+              "!type": "fn(path1: string, path2: string) -> string",
+              "!doc": "Combines two strings into a path."
+          },
+          "GetDirectoryName": {
+              "!type": "fn(path: string) -> string",
+              "!doc": "Returns the directory information for the specified path string."
+          },
+          "GetExtension": {
+              "!type": "fn(path: string) -> string",
+              "!doc": "Returns the extension of the specified path string."
+          },
+          "GetFileName": {
+              "!type": "fn(path: string) -> string",
+              "!doc": "Returns the file name and extension of the specified path string."
+          },
+          "GetFileNameWithoutExtension": {
+              "!type": "fn(path: string) -> string",
+              "!doc": "Returns the file name of the specified path string without the extension."
+          },
+          "GetFullPath": {
+              "!type": "fn(path: string) -> string",
+              "!doc": "Returns the absolute path for the specified path string."
+          },
+          "GetPathRoot": {
+              "!type": "fn(path: string) -> string",
+              "!doc": "Gets the root directory information of the specified path."
+          },
+          "GetRandomFileName": {
+              "!type": "fn() -> string",
+              "!doc": "Returns a random folder name or file name."
+          },
+          "GetTempFileName": {
+              "!type": "fn() -> string",
+              "!doc": "Creates a uniquely named, zero-byte temporary file on disk and returns the full path of that file."
+          },
+          "GetTempPath": {
+              "!type": "fn() -> string",
+              "!doc": "Returns the path of the current user's temporary folder."
+          },
+          "HasExtension": {
+              "!type": "fn(path: string) -> bool",
+              "!doc": "Determines whether a path includes a file name extension."
+          },
+          "IsPathRooted": {
+              "!type": "fn(path: string) -> bool",
+              "!doc": "Gets a value indicating whether the specified path string contains a root."
+          }
+      },
+      "!doc": "Path"
+  },
+  "Directory": {
+      "!type": "fn()",
+      "prototype": {
+          "CreateDirectory": {
+              "!type": "fn(path: string) -> +DirectoryInfo",
+              "!doc": "Creates all directories and subdirectories in the specified path unless they already exist."
+          },
+          "Delete": {
+              "!type": "fn(path: string, recursive?: bool)",
+              "!doc": "Deletes the specified directory and, if indicated, any subdirectories and files in the directory."
+          },
+          "Exists": {
+              "!type": "fn(path: string) -> bool",
+              "!doc": "Determines whether the given path refers to an existing directory on disk."
+          },
+          "GetCurrentDirectory": {
+              "!type": "fn() -> string",
+              "!doc": "Gets the current working directory of the application."
+          },
+          "GetDirectories": {
+              "!type": "fn(path: string, searchPattern?: string, searchOption?: +CSharpSearchOption) -> [string]",
+              "!doc": "Returns the names of subdirectories (including their paths) in the specified directory."
+          },
+          "GetFiles": {
+              "!type": "fn(path: string, searchPattern?: string, searchOption?: +CSharpSearchOption) -> [string]",
+              "!doc": "Returns the names of files (including their paths) that match the specified search pattern in the specified directory, using a value to determine whether to search subdirectories."
+          },
+          "GetDirectoryRoot": {
+              "!type": "fn(path: string) -> string",
+              "!doc": "Returns the volume information, root information, or both for the specified path."
+          },
+          "GetLogicalDrives": {
+              "!type": "fn() -> [string]",
+              "!doc": "Retrieves the names of the logical drives on this computer in the form drive letter"
+          },
+          "GetParent": {
+              "!type": "fn(path: string) -> +DirectoryInfo",
+              "!doc": "Retrieves the parent directory of the specified path, including both absolute and relative paths."
+          },
+          "Move": {
+              "!type": "fn(sourceDirName: string, destDirName: string)",
+              "!doc": "Moves a file or a directory and its contents to a new location."
+          }
+      },
+      "!doc": "Directory"
+  },
+  "DirectoryInfo": {
+      "!type": "fn()",
+      "prototype": {
+          "Name": {
+              "!type": "string",
+              "!doc": "Gets the name of this DirectoryInfo instance"
+          },
+          "FullName": {
+              "!type": "string",
+              "!doc": "Gets the full path of the directory."
+          },
+          "Exists": {
+              "!type": "bool",
+              "!doc": " Determine whether the directory exists."
+          },
+          "Parent": {
+              "!type": "+DirectoryInfo",
+              "!doc": "Gets the parent directory of a specified subdirectory."
+          },
+          "Root": {
+              "!type": "+DirectoryInfo",
+              "!doc": "Gets the root portion of the directory."
+          },
+          "Create": {
+              "!type": "fn()",
+              "!doc": "Creates a directory.If the directory already exists, this method does nothing."
+          },
+          "CreateSubdirectory": {
+              "!type": "fn(path: string) -> +DirectoryInfo",
+              "!doc": "Creates a subdirectory or subdirectories on the specified path. The specified path can be relative to this instance of the DirectoryInfo class."
+          },
+          "Delete": {
+              "!type": "fn(recursive?: bool)",
+              "!doc": "Deletes this instance of a DirectoryInfo, specifying whether to delete subdirectories and files."
+          },
+          "GetDirectories": {
+              "!type": "fn(searchPattern?: string) -> [+DirectoryInfo]",
+              "!doc": "Returns the subdirectories of the current directory."
+          },
+          "GetFiles": {
+              "!type": "fn(searchPattern?: string, searchOption?: +CSharpSearchOption) -> [+FileInfo]",
+              "!doc": "Returns a file list from the current directory matching the given search pattern."
+          },
+          "MoveTo": {
+              "!type": "fn(destDirName: string)",
+              "!doc": "Moves a DirectoryInfo instance and its contents to a new path."
+          }
+      },
+      "!doc": "DirectoryInfo"
+  },
+  "FileInfo": {
+      "!type": "fn()",
+      "prototype": {
+          "Name": {
+              "!type": "string",
+              "!doc": "Gets the name of this FileInfo instance"
+          },
+          "FullName": {
+              "!type": "string",
+              "!doc": "Gets the full path of the FileInfo."
+          },
+          "Exists": {
+              "!type": "bool",
+              "!doc": " Determine whether the file exists."
+          },
+          "Length": {
+              "!type": "number",
+              "!doc": "Gets the size, in bytes, of the current file."
+          },
+          "Extension": {
+              "!type": "string",
+              "!doc": "Gets the string representing the extension part of the file."
+          },
+          "IsReadOnly": {
+              "!type": "bool",
+              "!doc": "Gets or sets a value that determines if the current file is read only."
+          },
+          "AppendText": {
+              "!type": "fn() -> +StreamWriter",
+              "!doc": "Creates a StreamWriter that appends text to the file represented by this instance of the FileInfo."
+          },
+          "OpenText": {
+              "!type": "fn() -> +StreamReader",
+              "!doc": "Creates a StreamReader with UTF8 encoding that reads from an existing text file."
+          },
+          "OpenRead": {
+              "!type": "fn() -> +Stream",
+              "!doc": "Creates a read-only FileStream."
+          },
+          "OpenWrite": {
+              "!type": "fn() -> +Stream",
+              "!doc": "Creates a write-only FileStream."
+          },
+          "Open": {
+              "!type": "fn(mode: +CSharpFileMode) -> +Stream",
+              "!doc": "Opens a file in the specified mode."
+          },
+          "Delete": {
+              "!type": "fn()",
+              "!doc": "Permanently deletes a file"
+          },
+          "Create": {
+              "!type": "fn() -> +Stream",
+              "!doc": "Creates a file."
+          },
+          "MoveTo": {
+              "!type": "fn(destFileName: string)",
+              "!doc": "Moves a specified file to a new location, providing the option to specify a new file name."
+          },
+          "Replace": {
+              "!type": "fn(destinationFileName: string, destinationBackupFileName: string, ignoreMetadataErrors: bool) -> FileInfo.prototype",
+              "!doc": "Replaces the contents of a specified file with the file described by the current FileInfo object, deleting the original file, and creating a backup of the replaced file. Also specifies whether to ignore merge errors."
+          }
+      },
+      "!doc": "FileInfo"
+  },
+  "SystemFile": {
+      "!type": "fn()",
+      "prototype": {
+          "AppendAllLines": {
+              "!type": "fn(path: string, lines: [string])",
+              "!doc": "Appends lines to a file, and then closes the file. If the specified file does not exist, this method creates a file, writes the specified lines to the file, and then closes the file."
+          },
+          "AppendAllText": {
+              "!type": "fn(path: string, lines: string)",
+              "!doc": "Opens a file, appends the specified string to the file, and then closes the file. If the file does not exist, this method creates a file, writes the specified string to the file, then closes the file."
+          },
+          "Exists": {
+              "!type": "fn(path: string) -> bool",
+              "!doc": "Determines whether the specified file exists."
+          },
+          "Create": {
+              "!type": "fn(path: string) -> +Stream",
+              "!doc": "Creates or overwrites a file in the specified path."
+          },
+          "CreateText": {
+              "!type": "fn(path: string) -> +StreamWriter",
+              "!doc": "Creates or opens a file for writing UTF-8 encoded text."
+          },
+          "Delete": {
+              "!type": "fn(path: string)",
+              "!doc": "Deletes the specified file."
+          },
+          "Move": {
+              "!type": "fn(sourceFileName: string, destFileName: string)",
+              "!doc": "Moves a specified file to a new location, providing the option to specify a new file name."
+          },
+          "Open": {
+              "!type": "fn(path: string, mode: +CSharpFileMode) -> +Stream",
+              "!doc": "Opens a FileStream on the specified path with read/write access."
+          },
+          "OpenText": {
+              "!type": "fn(path: string) -> +StreamReader",
+              "!doc": "Opens an existing UTF-8 encoded text file for reading."
+          },
+          "ReadAllText": {
+              "!type": "fn(path: string) -> string",
+              "!doc": "Opens a text file, reads all lines of the file, and then closes the file."
+          },
+          "ReadAllLines": {
+              "!type": "fn(path: string) -> +ArrayList",
+              "!doc": "Opens a text file, reads all lines of the file, and then closes the file."
+          }
+      },
+      "!doc": "SystemFile"
+  },
+  "StreamReader": {
+      "!type": "fn()",
+      "prototype": {
+          "Close": {
+              "!type": "fn()",
+              "!doc": "Closes the current stream and releases any resources (such as sockets and file handles) associated with the current stream.Instead of calling this method, ensure that the stream is properly disposed."
+          },
+          "Dispose": {
+              "!type": "fn()",
+              "!doc": "Releases all resources used by the Stream."
+          },
+          "Peek": {
+              "!type": "fn() -> number",
+              "!doc": "returns the next available character but does not consume it."
+          },
+          "Read": {
+              "!type": "fn() -> number",
+              "!doc": "Reads the next character from the input stream and advances the character position by one character."
+          },
+          "ReadLine": {
+              "!type": "fn() -> string",
+              "!doc": "Reads a line of characters from the current stream and returns the data as a string."
+          },
+          "ReadToEnd": {
+              "!type": "fn() -> string",
+              "!doc": "Reads all characters from the current position to the end of the stream."
+          }
+      },
+      "!doc": "Csharp StreamWriter."
+  },
+  "StreamWriter": {
+      "!type": "fn()",
+      "prototype": {
+          "Close": {
+              "!type": "fn()",
+              "!doc": "Closes the current stream and releases any resources (such as sockets and file handles) associated with the current stream.Instead of calling this method, ensure that the stream is properly disposed."
+          },
+          "Dispose": {
+              "!type": "fn()",
+              "!doc": "Releases all resources used by the Stream."
+          },
+          "Flush": {
+              "!type": "fn()",
+              "!doc": "When overridden in a derived class, clears all buffers for this stream and causes any buffered data to be written to the underlying device."
+          },
+          "Write": {
+              "!type": "fn(value: string)",
+              "!doc": "Writes a string to the stream."
+          },
+          "WriteLine": {
+              "!type": "fn(value: string)",
+              "!doc": "Writes a string followed by a line terminator to the text string or stream."
+          }
+      },
+      "!doc": "Csharp StreamWriter."
+  },
+  "Stream": {
+      "!type": "fn()",
+      "prototype": {
+          "Length": {
+              "!type": "number",
+              "!doc": "Length of Stream."
+          },
+          "Close": {
+              "!type": "fn()",
+              "!doc": "Closes the current stream and releases any resources (such as sockets and file handles) associated with the current stream.Instead of calling this method, ensure that the stream is properly disposed."
+          },
+          "Dispose": {
+              "!type": "fn()",
+              "!doc": "Releases all resources used by the Stream."
+          },
+          "Flush": {
+              "!type": "fn()",
+              "!doc": "When overridden in a derived class, clears all buffers for this stream and causes any buffered data to be written to the underlying device."
+          },
+          "Read": {
+              "!type": "fn(buffer: [+Byte], offset: +Int32, count: +Int32) -> number",
+              "!doc": "Releases all resources used by the Stream."
+          },
+          "ReadByte": {
+              "!type": "fn() -> number",
+              "!doc": "Reads a byte from the stream and advances the position within the stream by one byte, or returns -1 if at the end of the stream."
+          },
+          "Write": {
+              "!type": "fn(buffer: [+Byte], offset: +Int32, count: +Int32)",
+              "!doc": "Writes a block of bytes to the file stream."
+          },
+          "WriteByte": {
+              "!type": "fn(value: +Byte)",
+              "!doc": "Writes a byte to the current position in the file stream."
+          },
+          "Seek": {
+              "!type": "fn(offset: number, origin: +CSharpSeekOrigin) -> number",
+              "!doc": "sets the position within the current stream."
+          }
+      },
+      "!doc": "Provides a Stream for read and write operations."
+  },
+  "Byte": {
+      "!type": "fn()",
+      "prototype": {
+          "Close": {
+              "!type": "fn(number: value)",
+              "!doc": "convert to Csharp Byte."
+          }
+      },
+      "!doc": "Csharp Byte."
+  },
+  "Int32": {
+      "!type": "fn()",
+      "prototype": {
+          "new": {
+              "!type": "fn(number: value)",
+              "!doc": "convert to Csharp Int32."
+          }
+      },
+      "!doc": "Csharp Int32."
+  },
+  "CSharpSearchOption": {
+      "!type": "fn()",
+      "prototype": {
+          "AllDirectories": {
+              "!type": "?",
+              "!doc": "Includes the current directory and all its subdirectories in a search operation. This option includes reparse points such as mounted drives and symbolic links in the search."
+          },
+          "TopDirectoryOnly": {
+              "!type": "?",
+              "!doc": "Includes only the current directory in a search operation."
+          }
+      },
+      "!doc": "Csharp SeekOrigin."
+  },
+  "CSharpFileMode": {
+      "!type": "fn()",
+      "prototype": {
+          "Append": {
+              "!type": "?",
+              "!doc": "Opens the file if it exists and seeks to the end of the file, or creates a new file"
+          },
+          "Create": {
+              "!type": "?",
+              "!doc": "Specifies that the operating system should create a new file. If the file already exists, it will be overwritten. "
+          },
+          "CreateNew": {
+              "!type": "?",
+              "!doc": "Specifies that the operating system should create a new file. "
+          },
+          "Open": {
+              "!type": "?",
+              "!doc": "Specifies that the operating system should open an existing file. "
+          },
+          "OpenOrCreate": {
+              "!type": "?",
+              "!doc": "Specifies that the operating system should open a file if it exists; otherwise, a new file should be created. "
+          },
+          "Truncate": {
+              "!type": "?",
+              "!doc": "Specifies that the operating system should open an existing file. When the file is opened, it should be truncated so that its size is zero bytes. "
+          }
+      },
+      "!doc": "Csharp SeekOrigin."
+  },
+  "CSharpSeekOrigin": {
+      "!type": "fn()",
+      "prototype": {
+          "Begin": {
+              "!type": "?",
+              "!doc": "Specifies the beginning of a stream."
+          },
+          "Current": {
+              "!type": "?",
+              "!doc": "Specifies the current position within a stream."
+          },
+          "End": {
+              "!type": "?",
+              "!doc": "Specifies the end of a stream."
+          }
+      },
+      "!doc": "Csharp SeekOrigin."
+  },
+  "ArrayList": {
+      "!type": "fn()",
+      "prototype": {
+          "Length": {
+              "!type": "number",
+              "!url": "https://developer.mozilla.org/en/docs/DOM/element.length",
+              "!doc": "Returns the number of items in a ArrayList."
+          },
+          "ElementAt": {
+              "!type": "fn(index: number) -> ?",
+              "!url": "https://developer.mozilla.org/en/docs/DOM/element.length",
+              "!doc": "Returns the value of items at index."
+          },
+          "ToList": {
+              "!type": "fn() -> +CsharpList",
+              "!url": "https://developer.mozilla.org/en/docs/DOM/element.length",
+              "!doc": "convert to csharp list."
+          }
+      },
+      "!url": "https://developer.mozilla.org/en/docs/DOM/NodeList",
+      "!doc": "NodeList objects are collections of nodes returned by getElementsByTagName, getElementsByTagNameNS, Node.childNodes, querySelectorAll, getElementsByClassName, etc."
+  },
+  "CsharpList": {
+      "!type": "fn()",
+      "prototype": {
+          "Count": {
+              "!type": "number",
+              "!url": "https://developer.mozilla.org/en/docs/DOM/element.length",
+              "!doc": "Returns the number of items in a CsharpList."
+          }
+      },
+      "!url": "https://developer.mozilla.org/en/docs/DOM/NodeList",
+      "!doc": "NodeList objects are collections of nodes returned by getElementsByTagName, getElementsByTagNameNS, Node.childNodes, querySelectorAll, getElementsByClassName, etc."
+  },
+  "AwaitStringNode": {
+      "!type": "fn()",
+      "prototype": {
+          "Result": {
+              "!type": "string",
+              "!url": "https://developer.mozilla.org/en/docs/DOM/Node.textContent",
+              "!doc": "Gets the result of await string"
+          }
+      },
+      "!url": "https://developer.mozilla.org/en/docs/DOM/Node",
+      "!doc": "A Node is an interface from which a number of DOM types inherit, and allows these various types to be treated (or tested) similarly."
+  },
+  "AwaitString": {
+      "!type": "fn()",
+      "prototype": {
+          "!proto": "AwaitStringNode.prototype"
+      },
+      "!url": "https://developer.mozilla.org/en/docs/DOM/Element",
+      "!doc": "AwaitString."
+  },
   "Element": {
     "!type": "fn()",
     "prototype": {
@@ -2845,11 +3468,6 @@ var def = {
     "!url": "https://developer.mozilla.org/en/docs/DOM/window.alert",
     "!doc": "Display an alert dialog with the specified content and an OK button."
   },
-  "confirm": {
-    "!type": "fn(message: string) -> bool",
-    "!url": "https://developer.mozilla.org/en/docs/DOM/window.confirm",
-    "!doc": "Displays a modal dialog with a message and two buttons, OK and Cancel."
-  },
   "prompt": {
     "!type": "fn(message: string, value: string) -> string",
     "!url": "https://developer.mozilla.org/en/docs/DOM/window.prompt",
@@ -2869,6 +3487,16 @@ var def = {
     "!type": "fn(x: number, y: number)",
     "!url": "https://developer.mozilla.org/en/docs/DOM/window.scroll",
     "!doc": "Scrolls the window to a particular place in the document."
+  },
+  "encodeURIComponent": {
+    "!type": "fn(str: string) -> string",
+    "!url": "https://developer.mozilla.org/en/docs/DOM/window.setTimeout",
+    "!doc": "encodeURIComponent."
+  },
+  "decodeURIComponent": {
+    "!type": "fn(str: string) -> string",
+    "!url": "https://developer.mozilla.org/en/docs/DOM/window.setTimeout",
+    "!doc": "decodeURIComponent."
   },
   "setTimeout": {
     "!type": "fn(f: fn(), ms: number) -> number",

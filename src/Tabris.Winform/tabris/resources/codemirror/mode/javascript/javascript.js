@@ -70,6 +70,31 @@
         var isOperatorChar = /[+\-*&%=<>!?|~^]/;
         var isJsonldKeyword = /^@(context|id|value|language|type|container|list|set|reverse|index|base|vocab|graph)"/;
 
+        function resetFunctionList() {
+            var items = [];
+            var lineNumber=-1;
+            for(var item in CodeMirror.functionTempList)
+            {
+                var line = CodeMirror.functionTempList[item];
+                var lineText = (CodeMirror.cm.getLineHandle(line)&&CodeMirror.cm.getLineHandle(line).text)||'';
+                if(lineText.indexOf(item)>=0){
+                    if(lineNumber == line) continue;
+                    items.push(CodeMirror.functionList[line]);
+                    lineNumber = line;
+                }
+            }
+
+            delete CodeMirror.functionTempList;
+            delete CodeMirror.functionList;
+            CodeMirror.functionTempList = {};
+            CodeMirror.functionList = {};
+            for (var i=0,len=items.length; i<len; i++)
+            {
+                CodeMirror.functionList[items[i].line] =items[i];
+                CodeMirror.functionTempList[items[i].text]=items[i].line;
+            }
+        }
+        
         function readRegexp(stream) {
             var escaped = false, next, inSet = false;
             while ((next = stream.next()) != null) {
@@ -91,6 +116,11 @@
         }
         function tokenBase(stream, state) {
             var ch;
+            if (stream.match("\"{\"")) {
+                while ((ch = stream.next()) != null) {
+                    return ret("string", "string");
+                }
+            }
             if (stream.match("{{")) {
                 while ((ch = stream.next()) != null) {
                     if (ch == "}" && stream.next() == "}") {
@@ -110,6 +140,37 @@
                 return ret("number", "number");
             } else if (ch == "." && stream.match("..")) {
                 return ret("spread", "meta");
+            }else if (state.functionScope && state.functionVarScope && ch == ")") {
+                delete state.functionVarScope;
+                return ret(ch);
+            }else if(state.functionScope&&ch == "("){
+                if(!CodeMirror.functionList){
+                    CodeMirror.functionList = {};
+                    CodeMirror.functionTempList = {};
+                }
+                if(state.functionName){
+                    CodeMirror.functionList[state.functionName.line]=state.functionName;
+                    CodeMirror.functionTempList[state.functionName.text]=state.functionName.line;
+                    if(CodeMirror.resetFunctionListTimeOut){
+                        clearTimeout(CodeMirror.resetFunctionListTimeOut);
+                    }
+                    CodeMirror.resetFunctionListTimeOut = setTimeout(function () {
+                        resetFunctionList();
+                    }, 200);
+                }
+                delete state.functionName;
+                return ret(ch);
+            }
+            else if (state.functionScope&&ch == "{") {
+                state.functionScopeIndex++;
+                return ret(ch);
+            } else if (state.functionScope && ch == "}") {
+                state.functionScopeIndex--;
+                if(state.functionScopeIndex<=1){
+                    delete state.functionScope;
+                    delete state.functionVars;
+                }
+                return ret(ch);
             } else if (/[\[\]{}\(\),;\:\.]/.test(ch)) {
                 return ret(ch);
             } else if (ch == "=" && stream.eat(">")) {
@@ -147,7 +208,40 @@
                 return ret("operator", "operator", stream.current());
             } else if (wordRE.test(ch)) {
                 stream.eatWhile(wordRE);
-                var word = stream.current(), known = keywords.propertyIsEnumerable(word) && keywords[word];
+                var word = stream.current(), known = keywords.propertyIsEnumerable(word) && keywords[word],isvar=false;
+                if((known && known.type == "function")){
+                    state.functionVarScope = true;
+                    state.functionScopeIndex = 1;
+                    if(state.functionScope){
+                        state.functionScopeIndex++;
+                        //console.log('state.functionScope 重复了');
+                    }
+                    if(state.functionScopeIndex==1){
+                        state.functionScope = true;
+                        state.functionVars = [];
+                    }
+                }else{
+                    if(state.lastType == 'function'){
+                        if(stream.lineOracle){
+                            state.functionName = {className:"CodeMirror-hint-template",text:word,line:stream.lineOracle.line,range:{start:{line:stream.lineOracle.line,ch:stream.start},end:{line:stream.lineOracle.line,ch:stream.pos}}};
+                        }
+                        return ret('variable-func' + ' func-'+word, 'variable-func'+ ' func-'+word, word);
+                    }else{
+                        if(state.functionVarScope && state.functionVars){
+                            state.functionVars.push(word);
+							isvar=true;
+                        }
+                    }
+                }
+
+				if(stream.string&&stream.string.replace(word,'').replace(/\s/g,'').indexOf(':function')>-1 && !isvar){
+                    if(state.functionVarScope && state.functionVars){
+                        state.functionVars.push(word);
+                    }
+                    state.functionName = {className:"CodeMirror-hint-template",text:word,line:stream.lineOracle.line,range:{start:{line:stream.lineOracle.line,ch:stream.start},end:{line:stream.lineOracle.line,ch:stream.pos}}};
+                    return ret("variable", "variable", word);
+                }
+				
                 return (known && state.lastType != ".") ? ret(known.type, known.style, word) :
                     ret("variable", "variable", word);
             }
@@ -173,9 +267,11 @@
                     state.tokenize = tokenBase;
                     return ret("string", "string", stream.current());
                 } else if (next == quote) {
+					lastQuote = null;
                     state.tokenize = tokenBase;
                     return ret("string", "string");
                 } else if (next == '{') {
+                    
                     if (lastQuote && lastQuote == quote) {
                         stream.eatNo("{");
                         state.tokenize = tokenBase;
@@ -287,6 +383,15 @@
             }
         }
 
+        function inFunctionVars(state,varname) {
+            if(!state.functionVars)return false;
+            for (var i=0,len=state.functionVars.length; i<len; i++)
+            {
+                if(state.functionVars[i] == varname)return true;
+            }
+            return false;
+        }
+
         function parseJS(state, style, type, content, stream) {
             var cc = state.cc;
             // Communicate our context to the combinators.
@@ -301,8 +406,9 @@
                 if (combinator(type, content)) {
                     while (cc.length && cc[cc.length - 1].lex)
                         cc.pop()();
+                    if (state.functionScope && inFunctionVars(state,content)) return "variable-2";
                     if (cx.marked) return cx.marked;
-                    if (type == "variable" && inScope(state, content)) return "variable-2";
+                    if (type == "variable" && inScope(state, content)) return "def";
                     return style;
                 }
             }
@@ -318,6 +424,7 @@
             pass.apply(null, arguments);
             return true;
         }
+        
         function register(varname) {
             function inList(list) {
                 for (var v = list; v; v = v.next)
@@ -699,16 +806,70 @@
                     if (c == poplex) lexical = lexical.prev;
                     else if (c != maybeelse) break;
                 }
+			
+				try{
+					var lastLine =CodeMirror.cm.getCursor(true).line-1;
+					while(CodeMirror.cm.getLine(lastLine).trim().length == 0){
+						lastLine--;
+					}
+					var lastTypeStr = CodeMirror.cm.getLine(lastLine).replace(/\s/g,'').substr(-2,2);
+					if(lastTypeStr == "},"){
+						
+						var lastFunctionStr = CodeMirror.cm.getLine(lastLine);
+						var spaceCount = 0;
+						for(var i =0;i<lastFunctionStr.length;i++){
+							if(lastFunctionStr[i]==' '){
+								spaceCount++;
+							}else{
+								break;
+							}
+						}
+						var head ={line:lastLine,ch:spaceCount};
+						var macthLine = CodeMirror.cm.findMatchingBracket(head,false,{});
+						if(macthLine && macthLine.to){
+							var lastFunctionStr2 = CodeMirror.cm.getLine(macthLine.to.line);
+							var spaceCount2 = 0;
+							for(var i =0;i<lastFunctionStr2.length;i++){
+								if(lastFunctionStr2[i]==' '){
+									spaceCount2++;
+								}else{
+									break;
+								}
+							}
+							return spaceCount2;
+						}
+						
+					}
+					if(CodeMirror.cm.getLine(lastLine).trim().substr(-1,1) == ',' && lexical.type != "stat" && lexical.prev.type != ")"){
+						lexical = lexical.prev;
+					}
+				}catch(ee){}
                 if (lexical.type == "stat" && firstChar == "}") lexical = lexical.prev;
                 if (statementIndent && lexical.type == ")" && lexical.prev.type == "stat")
                     lexical = lexical.prev;
                 var type = lexical.type, closing = firstChar == type;
-
+                if (lexical.type == '}' && lexical.indented == 0 && state.indented > 0) {
+                    return state.indented;
+                } else if (lexical.type == '}' && lexical.indented > 0 && state.indented > 0 && lexical.indented != state.indented && !closing) {
+                    return state.indented;
+                } else if (lexical.type == '}' && ((lexical.indented == 0 && state.indented == 0)) ) {
+                    //拿到当前的line
+                    var lastLine = CodeMirror.cm.getLine(CodeMirror.cm.getCursor(true).line - 1);
+                    var funIndex = lastLine && lastLine.indexOf('function');
+                    return funIndex > 0 ? funIndex + indentUnit:0;
+                }
                 if (type == "vardef") return lexical.indented + (state.lastType == "operator" || state.lastType == "," ? lexical.info + 1 : 0);
                 else if (type == "form" && firstChar == "{") return lexical.indented;
                 else if (type == "form") return lexical.indented + indentUnit;
-                else if (type == "stat")
+                else if (type == "stat"){
+					if(lexical.indented != lexical.column){
+						if(lexical.column-lexical.indented==1){
+							return  lexical.prev.column - lexical.column + indentUnit + indentUnit + 1 ;
+						}
+						return lexical.indented-1-(isContinuedStatement(state, textAfter) ? statementIndent || indentUnit : 0);
+					}
                     return lexical.indented + (isContinuedStatement(state, textAfter) ? statementIndent || indentUnit : 0);
+				}
                 else if (lexical.info == "switch" && !closing && parserConfig.doubleIndentSwitch != false)
                     return lexical.indented + (/^(?:case|default)\b/.test(textAfter) ? indentUnit : 2 * indentUnit);
                 else if (lexical.align) return lexical.column + (closing ? 0 : 1);

@@ -6552,13 +6552,13 @@
     // default. User code or addons can define them. Unknown commands
     // are simply ignored.
     keyMap.pcDefault = {
-        "Ctrl-A": "selectAll", "Ctrl-D": "deleteLine", "Ctrl-Z": "undo", "Shift-Ctrl-Z": "redo", "Ctrl-Y": "redo",
+        "Ctrl-A": "selectAll", "Ctrl-D": "copyLine", "Ctrl-Z": "undo", "Shift-Ctrl-Z": "redo", "Ctrl-Y": "redo",
         "Ctrl-Home": "goDocStart", "Ctrl-End": "goDocEnd", "Ctrl-Up": "goLineUp", "Ctrl-Down": "goLineDown",
         "Ctrl-Left": "goGroupLeft", "Ctrl-Right": "goGroupRight", "Alt-Left": "goLineStart", "Alt-Right": "goLineEnd",
         "Ctrl-Backspace": "delGroupBefore", "Ctrl-Delete": "delGroupAfter", "Ctrl-S": "save", "Ctrl-F": "find",
         "Ctrl-G": "findNext", "Shift-Ctrl-G": "findPrev", "Shift-Ctrl-F": "replace", "Shift-Ctrl-R": "replaceAll",
         "Ctrl-[": "indentLess", "Ctrl-]": "indentMore",
-        "Ctrl-U": "undoSelection", "Shift-Ctrl-U": "redoSelection", "Alt-U": "redoSelection",
+        "Ctrl-U": "undoSelection", "Shift-Ctrl-U": "redoSelection", "Alt-U": "redoSelection", "Ctrl-K": "killLine",
         fallthrough: "basic"
     }
     // Very basic readline/emacs-style bindings, which are standard on Mac.
@@ -6566,11 +6566,11 @@
         "Ctrl-F": "goCharRight", "Ctrl-B": "goCharLeft", "Ctrl-P": "goLineUp", "Ctrl-N": "goLineDown",
         "Alt-F": "goWordRight", "Alt-B": "goWordLeft", "Ctrl-A": "goLineStart", "Ctrl-E": "goLineEnd",
         "Ctrl-V": "goPageDown", "Shift-Ctrl-V": "goPageUp", "Ctrl-D": "delCharAfter", "Ctrl-H": "delCharBefore",
-        "Alt-D": "delWordAfter", "Alt-Backspace": "delWordBefore", "Ctrl-K": "killLine", "Ctrl-T": "transposeChars",
+        "Alt-D": "delWordAfter", "Alt-Backspace": "delWordBefore",  "Ctrl-K": "killLine","Ctrl-T": "transposeChars",
         "Ctrl-O": "openLine"
     }
     keyMap.macDefault = {
-        "Cmd-A": "selectAll", "Cmd-D": "deleteLine", "Cmd-Z": "undo", "Shift-Cmd-Z": "redo", "Cmd-Y": "redo",
+        "Cmd-A": "selectAll", "Cmd-D": "copyLine", "Cmd-Z": "undo", "Shift-Cmd-Z": "redo", "Cmd-Y": "redo",
         "Cmd-Home": "goDocStart", "Cmd-Up": "goDocStart", "Cmd-End": "goDocEnd", "Cmd-Down": "goDocEnd", "Alt-Left": "goGroupLeft",
         "Alt-Right": "goGroupRight", "Cmd-Left": "goLineLeft", "Cmd-Right": "goLineRight", "Alt-Backspace": "delGroupBefore",
         "Ctrl-Alt-Backspace": "delGroupAfter", "Alt-Delete": "delGroupAfter", "Cmd-S": "save", "Cmd-F": "find",
@@ -6821,15 +6821,54 @@
         selectAll: selectAll,
         singleSelection: function (cm) { return cm.setSelection(cm.getCursor("anchor"), cm.getCursor("head"), sel_dontScroll); },
         killLine: function (cm) {
-            return deleteNearSelection(cm, function (range) {
-                if (range.empty()) {
-                    var len = getLine(cm.doc, range.head.line).text.length
-                    if (range.head.ch == len && range.head.line < cm.lastLine()) { return { from: range.head, to: Pos(range.head.line + 1, 0) } }
-                    else { return { from: range.head, to: Pos(range.head.line, len) } }
-                } else {
-                    return { from: range.from(), to: range.to() }
+            var sels = cm.listSelections();
+            if(!sels || sels.length!=1){
+                return;
+            }
+            return runInOp(cm, function () {
+                var data = [];
+                if(!CodeMirror.quickTemplatesHint){
+                    return;
                 }
+                for(var i=0;i<CodeMirror.quickTemplatesHint.length;i++){
+                    var item = CodeMirror.quickTemplatesHint[i];
+                    var se = sels[0];
+                    if (se.head.line > se.anchor.line) {
+                        item.selection = { anchor: se.head, head: se.anchor }
+                    } else if (se.anchor.sticky && se.anchor.sticky=='after') {
+                        item.selection = { anchor: se.head, head: se.anchor }
+                    }else {
+                        item.selection = sels[0];
+                    } 
+                    data.push(item);
+                }
+                cm.showHint({
+                    isQuick:true,
+                    data:data
+                });
             });
+            // return deleteNearSelection(cm, function (range) {
+            //     if (range.empty()) {
+            //         var len = getLine(cm.doc, range.head.line).text.length
+            //         if (range.head.ch == len && range.head.line < cm.lastLine()) { return { from: range.head, to: Pos(range.head.line + 1, 0) } }
+            //         else { return { from: range.head, to: Pos(range.head.line, len) } }
+            //     } else {
+            //         return { from: range.from(), to: range.to() }
+            //     }
+            // });
+        },
+        copyLine: function (cm) {
+            return runInOp(cm, function () {
+                var pos = cm.getCursor(true);
+                var lineNumber = pos.line;
+                var line = cm.getLine(lineNumber);
+                cm.setCursor({line:lineNumber,ch:line.length})
+                cm.replaceRange("\n" + line, cm.getCursor(true));
+                cm.setCursor({line:lineNumber+1,ch:line.length})
+                // cm.setSelection({line:lineNumber+1,ch:1},{line:lineNumber+1,ch:8})
+                // for (var i = kill.length - 1; i >= 0; i--) { replaceRange(cm.doc, "", kill[i].from, kill[i].to, "+delete") }
+                 ensureCursorVisible(cm)
+            })
         },
         deleteLine: function (cm) {
             return deleteNearSelection(cm, function (range) {
@@ -6970,7 +7009,48 @@
                 cm.setSelections(newSel)
             });
         },
+
         newlineAndIndent: function (cm) {
+            var pos = cm.getCursor(true);
+            var lineNumber = pos.line;
+            var line = cm.getLine(lineNumber);
+            var word = line.trim();
+            if (pos.ch != 0 && word == "/*") {
+                var temp1 = 0;
+                for (var iy = 0; iy < line.length; iy++) {
+                    if (line[iy] == ' ') {
+                        temp1++;
+                    } else {
+                        break;
+                    }
+                }
+                function getSpaceText(num) {
+                    var ss = '';
+                    for (var yy = 0; yy < num; yy++) {
+                        ss += ' ';
+                    }
+                    return ss;
+                }
+                return runInOp(cm, function () {
+                    var replaceStr = '\n' + getSpaceText(temp1)  +' comment';
+                    try{
+                        //解析下面的一行 如果是function的话 拿到参数
+                        var nextline = cm.getLine(lineNumber+1);
+                        var s2 = nextline.match(/function[^(]*\(([^)]*)\)/)[1];
+                        var paramList = s2.split(/\W+/);
+                        for (var i=0,len=paramList.length; i<len; i++)
+                        {
+                            if (paramList[i] && paramList[i].length > 0) replaceStr += '\n ' + getSpaceText(temp1)+ paramList[i] + ":";
+                        }
+                        replaceStr += '\n' + getSpaceText(temp1) +' return:void';
+                    }catch(e){
+
+                    }
+                    cm.replaceRange(replaceStr + '\n' + getSpaceText(temp1) +'*/', cm.getCursor(true));
+                    cm.setSelection({ line: lineNumber + 1, ch: 1 + temp1 }, { line: lineNumber + 1, ch: temp1+8 });
+
+                });
+            }
             return runInOp(cm, function () {
                 var sels = cm.listSelections()
                 for (var i = sels.length - 1; i >= 0; i--) { cm.replaceRange(cm.doc.lineSeparator(), sels[i].anchor, sels[i].head, "+input") }
@@ -7205,7 +7285,43 @@
         if (clickInGutter(cm, e)) { return }
         var pos = posFromMouse(cm, e), button = e_button(e), repeat = pos ? clickRepeat(pos, button) : "single"
         window.focus()
+        if(e.ctrlKey && e.which == 1){
+            //ctrl+click
 
+            setTimeout(function () {
+                try {
+                    var cur =cm.getCursor(true);
+
+                    var match = cm.state.matchHighlighter.matchesonscroll.matches[0];
+                    var text = cm.getRange(match.from,match.to);
+                    if(text && text.length>0){
+                        for(var item in CodeMirror.functionTempList)
+                        {
+                            var line = CodeMirror.functionTempList[item];
+                            var lineText = cm.getLineHandle(line).text;
+                            if(lineText.indexOf(item)>=0){
+                                if(item == text){
+                                    var range = CodeMirror.functionList[line].range;
+                                    if(cur.line ==range.end.line )break;
+                                    cm.setCursor(Number(range.end.line), Number(range.end.ch));
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    // for(var y=1;y<matchs.length;y++){
+                    //     if(cur.line == matchs[y].from.line){
+                    //         if(cur.ch>=matchs[y].from.ch &&cur.ch>=matchs[y].to.ch){
+                    //
+                    //         }
+                    //     }
+                    // }
+                }catch(e){
+
+                }
+            },200)
+
+        }
         // #3261: make sure, that we're not starting a second selection
         if (button == 1 && cm.state.selectingText) { cm.state.selectingText(e) }
 
